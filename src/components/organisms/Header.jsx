@@ -30,7 +30,8 @@ const handleCreatePost = () => {
     navigate("/");
   };
 
-  return (
+return (
+    <>
     <header className={cn(
       "sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm",
       className
@@ -146,14 +147,15 @@ const handleCreatePost = () => {
           </div>
         </div>
       </div>
-    </header>
+</header>
     
     <AuthModal 
       isOpen={showAuthModal} 
       onClose={() => setShowAuthModal(false)}
       defaultTab="signup"
     />
-  </>;
+    </>
+  );
 };
 
 export default Header;

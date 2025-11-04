@@ -1,15 +1,11 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import AuthModal from "@/components/organisms/AuthModal";
-import ApperIcon from "@/components/ApperIcon";
-import Button from "@/components/atoms/Button";
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import SearchBar from "@/components/molecules/SearchBar";
+import Button from "@/components/atoms/Button";
+import ApperIcon from "@/components/ApperIcon";
 import { cn } from "@/utils/cn";
 
 const Header = ({ className }) => {
-  const { user } = useSelector(state => state.user);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -18,20 +14,15 @@ const Header = ({ className }) => {
     // TODO: Implement search functionality
   };
 
-const handleCreatePost = () => {
-    if (!user) {
-      setShowAuthModal(true);
-    } else {
-      navigate("/create");
-    }
+  const handleCreatePost = () => {
+    navigate("/create");
   };
 
   const handleLogoClick = () => {
     navigate("/");
   };
 
-return (
-    <>
+  return (
     <header className={cn(
       "sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm",
       className
@@ -143,18 +134,11 @@ return (
                   </div>
                 </>
               )}
-</div>
+            </div>
           </div>
         </div>
       </div>
-</header>
-    
-    <AuthModal 
-      isOpen={showAuthModal} 
-      onClose={() => setShowAuthModal(false)}
-      defaultTab="signup"
-    />
-    </>
+    </header>
   );
 };
 

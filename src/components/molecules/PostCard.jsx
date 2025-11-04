@@ -1,11 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import AuthModal from "@/components/organisms/AuthModal";
+import VoteButtons from "@/components/molecules/VoteButtons";
 import ApperIcon from "@/components/ApperIcon";
 import Badge from "@/components/atoms/Badge";
-import VoteButtons from "@/components/molecules/VoteButtons";
-import { formatNumber, formatTimeAgo, truncateText } from "@/utils/formatters";
+import { formatTimeAgo, formatNumber, truncateText } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 
 const PostCard = ({ 
@@ -14,10 +12,8 @@ const PostCard = ({
   className,
   showCommunity = true
 }) => {
-const navigate = useNavigate();
+  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
-  const { user } = useSelector(state => state.user);
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handlePostClick = () => {
     navigate(`/post/${post.id}`);
@@ -157,45 +153,17 @@ const navigate = useNavigate();
               <ApperIcon name="MessageCircle" className="w-4 h-4" />
               <span>{formatNumber(post.commentCount)} comments</span>
             </div>
-<button 
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!user) {
-                  setShowAuthModal(true);
-                } else {
-                  // Handle share functionality
-                  console.log('Share post:', post.id);
-                }
-              }}
-              className="flex items-center space-x-1 hover:text-primary transition-colors"
-            >
+            <button className="flex items-center space-x-1 hover:text-primary transition-colors">
               <ApperIcon name="Share" className="w-4 h-4" />
               <span>Share</span>
             </button>
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!user) {
-                  setShowAuthModal(true);
-                } else {
-                  // Handle save functionality
-                  console.log('Save post:', post.id);
-                }
-              }}
-              className="flex items-center space-x-1 hover:text-primary transition-colors"
-            >
+            <button className="flex items-center space-x-1 hover:text-primary transition-colors">
               <ApperIcon name="Bookmark" className="w-4 h-4" />
               <span>Save</span>
-</button>
+            </button>
           </div>
         </div>
       </div>
-      
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)}
-        defaultTab="signup"
-      />
     </article>
   );
 };

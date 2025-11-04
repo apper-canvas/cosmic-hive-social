@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import AuthModal from "@/components/organisms/AuthModal";
+import { useState, useEffect } from "react";
 import ApperIcon from "@/components/ApperIcon";
-import { formatNumber } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
+import { formatNumber } from "@/utils/formatters";
 
 const VoteButtons = ({ 
   postId,
@@ -25,17 +23,11 @@ const VoteButtons = ({
     setCurrentUpvotes(upvotes);
     setCurrentDownvotes(downvotes);
   }, [userVote, upvotes, downvotes]);
-const { user } = useSelector(state => state.user);
-  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const score = currentUpvotes - currentDownvotes;
 
   const handleVote = async (voteType) => {
     if (isAnimating) return;
-    
-    // Check authentication before allowing vote
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
 
     const previousVote = currentVote;
     const previousUpvotes = currentUpvotes;
@@ -104,33 +96,30 @@ const { user } = useSelector(state => state.user);
     sm: "text-xs",
     md: "text-sm",
     lg: "text-base"
-};
-
-  const score = currentUpvotes - currentDownvotes;
+  };
 
   if (variant === "horizontal") {
     return (
-      <>
-        <div className={cn("flex items-center space-x-1", className)}>
-          <button
-            onClick={() => handleVote("up")}
-            className={cn(
-              "flex items-center justify-center rounded-full transition-all duration-150 hover:bg-upvote/10",
-              sizes[size],
-              currentVote === "up" ? "text-upvote bg-upvote/10" : "text-gray-400 hover:text-upvote",
-              isAnimating && "vote-pulse"
-            )}
-          >
-            <ApperIcon name="ArrowUp" className={iconSizes[size]} />
-          </button>
-          
-          <span className={cn(
-            "font-medium px-2",
-            textSizes[size],
-            score > 0 ? "text-upvote" : score < 0 ? "text-downvote" : "text-gray-600"
-          )}>
-            {formatNumber(score)}
-          </span>
+      <div className={cn("flex items-center space-x-1", className)}>
+        <button
+          onClick={() => handleVote("up")}
+          className={cn(
+            "flex items-center justify-center rounded-full transition-all duration-150 hover:bg-upvote/10",
+            sizes[size],
+            currentVote === "up" ? "text-upvote bg-upvote/10" : "text-gray-400 hover:text-upvote",
+            isAnimating && "vote-pulse"
+          )}
+        >
+          <ApperIcon name="ArrowUp" className={iconSizes[size]} />
+        </button>
+        
+        <span className={cn(
+          "font-medium px-2",
+          textSizes[size],
+          score > 0 ? "text-upvote" : score < 0 ? "text-downvote" : "text-gray-600"
+        )}>
+          {formatNumber(score)}
+        </span>
         
         <button
           onClick={() => handleVote("down")}
@@ -142,60 +131,45 @@ const { user } = useSelector(state => state.user);
           )}
         >
           <ApperIcon name="ArrowDown" className={iconSizes[size]} />
-</button>
-        
-        <AuthModal 
-          isOpen={showAuthModal} 
-          onClose={() => setShowAuthModal(false)}
-          defaultTab="signup"
-        />
+        </button>
       </div>
-    </>
     );
   }
 
   return (
-    <>
-      <div className={cn("flex flex-col items-center space-y-1", className)}>
-        <button
-          onClick={() => handleVote("up")}
-          className={cn(
-            "flex items-center justify-center rounded-full transition-all duration-150 hover:bg-upvote/10 active:scale-110",
-            sizes[size],
-            currentVote === "up" ? "text-upvote bg-upvote/10" : "text-gray-400 hover:text-upvote",
-            isAnimating && currentVote === "up" && "vote-pulse"
-          )}
-        >
-          <ApperIcon name="ArrowUp" className={iconSizes[size]} />
-        </button>
-        
-        <span className={cn(
-          "font-bold select-none",
-          textSizes[size],
-          score > 0 ? "text-upvote" : score < 0 ? "text-downvote" : "text-gray-600"
-        )}>
-          {formatNumber(score)}
-        </span>
-        
-        <button
-          onClick={() => handleVote("down")}
-          className={cn(
-            "flex items-center justify-center rounded-full transition-all duration-150 hover:bg-downvote/10 active:scale-110",
-            sizes[size],
-            currentVote === "down" ? "text-downvote bg-downvote/10" : "text-gray-400 hover:text-downvote",
-            isAnimating && currentVote === "down" && "vote-pulse"
-          )}
-        >
-          <ApperIcon name="ArrowDown" className={iconSizes[size]} />
-        </button>
-      </div>
+    <div className={cn("flex flex-col items-center space-y-1", className)}>
+      <button
+        onClick={() => handleVote("up")}
+        className={cn(
+          "flex items-center justify-center rounded-full transition-all duration-150 hover:bg-upvote/10 active:scale-110",
+          sizes[size],
+          currentVote === "up" ? "text-upvote bg-upvote/10" : "text-gray-400 hover:text-upvote",
+          isAnimating && currentVote === "up" && "vote-pulse"
+        )}
+      >
+        <ApperIcon name="ArrowUp" className={iconSizes[size]} />
+      </button>
       
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)}
-        defaultTab="signup"
-      />
-    </>
+      <span className={cn(
+        "font-bold select-none",
+        textSizes[size],
+        score > 0 ? "text-upvote" : score < 0 ? "text-downvote" : "text-gray-600"
+      )}>
+        {formatNumber(score)}
+      </span>
+      
+      <button
+        onClick={() => handleVote("down")}
+        className={cn(
+          "flex items-center justify-center rounded-full transition-all duration-150 hover:bg-downvote/10 active:scale-110",
+          sizes[size],
+          currentVote === "down" ? "text-downvote bg-downvote/10" : "text-gray-400 hover:text-downvote",
+          isAnimating && currentVote === "down" && "vote-pulse"
+        )}
+      >
+        <ApperIcon name="ArrowDown" className={iconSizes[size]} />
+      </button>
+    </div>
   );
 };
 

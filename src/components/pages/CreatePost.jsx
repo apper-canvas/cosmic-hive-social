@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { postsService } from "@/services/api/postsService";
 import ApperIcon from "@/components/ApperIcon";
@@ -11,14 +10,6 @@ import Textarea from "@/components/atoms/Textarea";
 
 const CreatePost = () => {
   const navigate = useNavigate();
-  const { user } = useSelector(state => state.user);
-  
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!user) {
-      navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
-    }
-  }, [user, navigate]);
   
 const [postData, setPostData] = useState({
     title: "",

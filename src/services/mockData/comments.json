@@ -1,0 +1,164 @@
+[
+  {
+    "id": "c1",
+    "postId": "1",
+    "parentId": null,
+    "content": "Great summary! I'm particularly excited about the advances in multimodal AI. Being able to process text, images, and audio simultaneously is going to unlock so many new applications.",
+    "authorUsername": "ai_researcher",
+    "upvotes": 45,
+    "downvotes": 2,
+    "createdAt": "2024-01-15T11:15:00Z",
+    "userVote": "up",
+    "isCollapsed": false,
+    "replies": [
+      {
+        "id": "c2",
+        "postId": "1",
+        "parentId": "c1",
+        "content": "Absolutely! I think we're going to see some incredible applications in healthcare and education once these multimodal models mature.",
+        "authorUsername": "tech_enthusiast",
+        "upvotes": 23,
+        "downvotes": 1,
+        "createdAt": "2024-01-15T11:30:00Z",
+        "userVote": "none",
+        "isCollapsed": false,
+        "replies": []
+      }
+    ]
+  },
+  {
+    "id": "c3",
+    "postId": "1",
+    "parentId": null,
+    "content": "I'm more concerned about the job displacement aspect. While the technology is impressive, we need to have serious conversations about retraining programs and social safety nets.",
+    "authorUsername": "policy_wonk",
+    "upvotes": 67,
+    "downvotes": 8,
+    "createdAt": "2024-01-15T12:00:00Z",
+    "userVote": "none",
+    "isCollapsed": false,
+    "replies": [
+      {
+        "id": "c4",
+        "postId": "1",
+        "parentId": "c3",
+        "content": "Valid point, but historically new technologies create more jobs than they eliminate. The key is ensuring people have access to education and training for these new roles.",
+        "authorUsername": "economist_view",
+        "upvotes": 34,
+        "downvotes": 12,
+        "createdAt": "2024-01-15T12:20:00Z",
+        "userVote": "up",
+        "isCollapsed": false,
+        "replies": [
+          {
+            "id": "c5",
+            "postId": "1",
+            "parentId": "c4",
+            "content": "That's true historically, but AI might be different. It's not just automating manual labor - it's starting to handle cognitive tasks too. We might need universal basic income sooner than we think.",
+            "authorUsername": "policy_wonk",
+            "upvotes": 19,
+            "downvotes": 6,
+            "createdAt": "2024-01-15T12:35:00Z",
+            "userVote": "none",
+            "isCollapsed": false,
+            "replies": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "c6",
+    "postId": "2",
+    "parentId": null,
+    "content": "Absolutely stunning photo! What camera and settings did you use for this shot?",
+    "authorUsername": "photo_gear_head",
+    "upvotes": 12,
+    "downvotes": 0,
+    "createdAt": "2024-01-15T08:45:00Z",
+    "userVote": "none",
+    "isCollapsed": false,
+    "replies": [
+      {
+        "id": "c7",
+        "postId": "2",
+        "parentId": "c6",
+        "content": "Thanks! Used my Canon R5 with a 24-70mm f/2.8. Shot at f/8, ISO 100, 1/125s. The golden hour lighting really made all the difference!",
+        "authorUsername": "nature_lover",
+        "upvotes": 8,
+        "downvotes": 0,
+        "createdAt": "2024-01-15T09:00:00Z",
+        "userVote": "up",
+        "isCollapsed": false,
+        "replies": []
+      }
+    ]
+  },
+  {
+    "id": "c8",
+    "postId": "4",
+    "parentId": null,
+    "content": "This is so inspiring! I'm currently in month 2 of my coding journey and sometimes feel overwhelmed. Posts like this keep me motivated. Quick question - how many hours per day did you dedicate to learning?",
+    "authorUsername": "aspiring_dev",
+    "upvotes": 28,
+    "downvotes": 0,
+    "createdAt": "2024-01-15T07:30:00Z",
+    "userVote": "up",
+    "isCollapsed": false,
+    "replies": [
+      {
+        "id": "c9",
+        "postId": "4",
+        "parentId": "c8",
+        "content": "Don't give up! The feeling of being overwhelmed is completely normal. I averaged about 3-4 hours on weekdays and 6-8 hours on weekends. The key is consistency rather than marathon sessions.",
+        "authorUsername": "junior_dev",
+        "upvotes": 15,
+        "downvotes": 0,
+        "createdAt": "2024-01-15T07:45:00Z",
+        "userVote": "none",
+        "isCollapsed": false,
+        "replies": []
+      }
+    ]
+  },
+  {
+    "id": "c10",
+    "postId": "4",
+    "parentId": null,
+    "content": "Congratulations on the job! One piece of advice as you start your career - don't be afraid to ask questions. Senior developers would rather help you understand something than have you struggle in silence for hours.",
+    "authorUsername": "senior_engineer",
+    "upvotes": 42,
+    "downvotes": 1,
+    "createdAt": "2024-01-15T08:10:00Z",
+    "userVote": "up",
+    "isCollapsed": false,
+    "replies": []
+  },
+  {
+    "id": "c11",
+    "postId": "5",
+    "parentId": null,
+    "content": "The Witcher 3 is incredible! Have you tried the DLCs? Blood and Wine is basically a full game on its own. For favorite RPG, I'd have to go with Mass Effect 2 - the character development and story choices still give me chills.",
+    "authorUsername": "rpg_veteran",
+    "upvotes": 19,
+    "downvotes": 2,
+    "createdAt": "2024-01-15T05:45:00Z",
+    "userVote": "none",
+    "isCollapsed": false,
+    "replies": [
+      {
+        "id": "c12",
+        "postId": "5",
+        "parentId": "c11",
+        "content": "Oh yes, both DLCs are amazing! Hearts of Stone has one of the best villains in gaming. Mass Effect 2 is also fantastic - that suicide mission still gets my heart racing even after multiple playthroughs.",
+        "authorUsername": "gamer_at_heart",
+        "upvotes": 11,
+        "downvotes": 0,
+        "createdAt": "2024-01-15T06:00:00Z",
+        "userVote": "up",
+        "isCollapsed": false,
+        "replies": []
+      }
+    ]
+  }
+]

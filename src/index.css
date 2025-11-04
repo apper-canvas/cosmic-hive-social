@@ -1,0 +1,115 @@
+@import 'react-toastify/dist/ReactToastify.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #DAE0E6;
+    color: #1A1A1B;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0;
+  }
+
+  button {
+    font-family: inherit;
+  }
+
+  input, textarea {
+    font-family: inherit;
+  }
+}
+
+/* Toast Overrides */
+.Toastify__toast-container {
+  z-index: 9999;
+  width: 380px;
+  font-size: 14px;
+}
+
+.Toastify__toast {
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  padding: 12px 16px;
+  min-height: 48px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.Toastify__toast--success {
+  background: #46D160;
+  color: white;
+}
+
+.Toastify__toast--error {
+  background: #EA0027;
+  color: white;
+}
+
+.Toastify__toast--info {
+  background: #0079D3;
+  color: white;
+}
+
+.Toastify__toast--warning {
+  background: #FFB000;
+  color: white;
+}
+
+.Toastify__progress-bar {
+  height: 2px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation Classes */
+@keyframes vote-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.vote-pulse {
+  animation: vote-pulse 0.2s ease-in-out;
+}
+
+@keyframes post-lift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
+
+.post-lift {
+  animation: post-lift 0.2s ease-out forwards;
+}

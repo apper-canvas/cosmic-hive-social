@@ -1,11 +1,15 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import SearchBar from "@/components/molecules/SearchBar";
-import Button from "@/components/atoms/Button";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import AuthModal from "@/components/organisms/AuthModal";
 import ApperIcon from "@/components/ApperIcon";
+import Button from "@/components/atoms/Button";
+import SearchBar from "@/components/molecules/SearchBar";
 import { cn } from "@/utils/cn";
 
 const Header = ({ className }) => {
+  const { user } = useSelector(state => state.user);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -14,8 +18,12 @@ const Header = ({ className }) => {
     // TODO: Implement search functionality
   };
 
-  const handleCreatePost = () => {
-    navigate("/create");
+const handleCreatePost = () => {
+    if (!user) {
+      setShowAuthModal(true);
+    } else {
+      navigate("/create");
+    }
   };
 
   const handleLogoClick = () => {
@@ -134,12 +142,18 @@ const Header = ({ className }) => {
                   </div>
                 </>
               )}
-            </div>
+</div>
           </div>
         </div>
       </div>
     </header>
-  );
+    
+    <AuthModal 
+      isOpen={showAuthModal} 
+      onClose={() => setShowAuthModal(false)}
+      defaultTab="signup"
+    />
+  </>;
 };
 
 export default Header;

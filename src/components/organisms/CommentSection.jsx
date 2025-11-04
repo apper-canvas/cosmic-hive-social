@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import AuthModal from "@/components/organisms/AuthModal";
 import { toast } from "react-toastify";
 import Button from "@/components/atoms/Button";
 import Textarea from "@/components/atoms/Textarea";
@@ -19,14 +20,15 @@ const CommentSection = ({
   className,
   postAuthor
 }) => {
-  const { user } = useSelector(state => state.user);
+const { user } = useSelector(state => state.user);
   const navigate = useNavigate();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
 const handleSubmitComment = async () => {
-    if (!user) {
-      navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+if (!user) {
+      setShowAuthModal(true);
       return;
     }
     if (!newComment.trim()) return;
@@ -46,7 +48,7 @@ const handleSubmitComment = async () => {
 
 const handleReply = async (parentId, content) => {
     if (!user) {
-      navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      setShowAuthModal(true);
       return;
     }
     try {
@@ -84,9 +86,9 @@ const handleReply = async (parentId, content) => {
           <Textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            onClick={() => {
+onClick={() => {
               if (!user) {
-                navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+                setShowAuthModal(true);
               }
             }}
             placeholder="What are your thoughts?"
@@ -136,6 +138,12 @@ const handleReply = async (parentId, content) => {
           ))}
         </div>
       )}
+      
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        defaultTab="signup"
+      />
     </div>
   );
 };

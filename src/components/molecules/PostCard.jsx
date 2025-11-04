@@ -1,9 +1,11 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import VoteButtons from "@/components/molecules/VoteButtons";
+import { useSelector } from "react-redux";
+import AuthModal from "@/components/organisms/AuthModal";
 import ApperIcon from "@/components/ApperIcon";
 import Badge from "@/components/atoms/Badge";
-import { formatTimeAgo, formatNumber, truncateText } from "@/utils/formatters";
+import VoteButtons from "@/components/molecules/VoteButtons";
+import { formatNumber, formatTimeAgo, truncateText } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 
 const PostCard = ({ 
@@ -12,8 +14,10 @@ const PostCard = ({
   className,
   showCommunity = true
 }) => {
-  const navigate = useNavigate();
+const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
+  const { user } = useSelector(state => state.user);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handlePostClick = () => {
     navigate(`/post/${post.id}`);
@@ -153,17 +157,45 @@ const PostCard = ({
               <ApperIcon name="MessageCircle" className="w-4 h-4" />
               <span>{formatNumber(post.commentCount)} comments</span>
             </div>
-            <button className="flex items-center space-x-1 hover:text-primary transition-colors">
+<button 
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!user) {
+                  setShowAuthModal(true);
+                } else {
+                  // Handle share functionality
+                  console.log('Share post:', post.id);
+                }
+              }}
+              className="flex items-center space-x-1 hover:text-primary transition-colors"
+            >
               <ApperIcon name="Share" className="w-4 h-4" />
               <span>Share</span>
             </button>
-            <button className="flex items-center space-x-1 hover:text-primary transition-colors">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!user) {
+                  setShowAuthModal(true);
+                } else {
+                  // Handle save functionality
+                  console.log('Save post:', post.id);
+                }
+              }}
+              className="flex items-center space-x-1 hover:text-primary transition-colors"
+            >
               <ApperIcon name="Bookmark" className="w-4 h-4" />
               <span>Save</span>
-            </button>
+</button>
           </div>
         </div>
       </div>
+      
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        defaultTab="signup"
+      />
     </article>
   );
 };

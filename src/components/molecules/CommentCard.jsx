@@ -1,8 +1,10 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import VoteButtons from "@/components/molecules/VoteButtons";
+import { useSelector } from "react-redux";
+import AuthModal from "@/components/organisms/AuthModal";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
+import VoteButtons from "@/components/molecules/VoteButtons";
 import { formatTimeAgo } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 
@@ -13,6 +15,8 @@ const CommentCard = ({
   depth = 0,
   className 
 }) => {
+  const { user } = useSelector(state => state.user);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(comment.isCollapsed || false);
   const [showReplyForm, setShowReplyForm] = useState(false);
@@ -40,9 +44,9 @@ const CommentCard = ({
   return (
     <div className={cn("space-y-2", className)}>
       <div 
-        className={cn(
+className={cn(
           "border-l-2 border-gray-200 pl-3",
-depth > 0 ? "border-gray-300 bg-gray-50/50" : "border-gray-200"
+          depth > 0 ? "border-gray-300 bg-gray-50/50" : "border-gray-200"
         )}
         style={{ marginLeft: depth > 0 ? `${Math.min(depth * 20, maxDepth * 20)}px` : undefined }}
       >
@@ -95,9 +99,14 @@ depth > 0 ? "border-gray-300 bg-gray-50/50" : "border-gray-200"
                 size="sm"
                 variant="horizontal"
               />
-              
-              <button
-                onClick={() => setShowReplyForm(!showReplyForm)}
+<button
+                onClick={() => {
+                  if (!user) {
+                    setShowAuthModal(true);
+                  } else {
+                    setShowReplyForm(!showReplyForm);
+                  }
+                }}
                 className="text-xs text-gray-500 hover:text-primary transition-colors font-medium"
               >
                 Reply
@@ -147,13 +156,19 @@ depth > 0 ? "border-gray-300 bg-gray-50/50" : "border-gray-200"
             <CommentCard
               key={reply.id}
               comment={reply}
-              onVote={onVote}
+onVote={onVote}
               onReply={onReply}
               depth={depth + 1}
             />
           ))}
         </div>
       )}
+      
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        defaultTab="signup"
+      />
 
       {/* Show More Link for Deep Nesting */}
       {depth >= maxDepth && comment.replies && comment.replies.length > 0 && (

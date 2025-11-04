@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import SearchBar from "@/components/molecules/SearchBar";
-import Button from "@/components/atoms/Button";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import ApperIcon from "@/components/ApperIcon";
+import Button from "@/components/atoms/Button";
+import SearchBar from "@/components/molecules/SearchBar";
 import { cn } from "@/utils/cn";
 
 const Header = ({ className }) => {
+  const { isAuthenticated } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -76,65 +78,67 @@ const Header = ({ className }) => {
               <ApperIcon name="Plus" className="w-4 h-4" />
             </Button>
 
-            {/* User Menu */}
-            <div className="relative">
-              <Button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                variant="ghost"
-                size="sm"
-                className="p-2"
-              >
-                <ApperIcon name="User" className="w-5 h-5" />
-              </Button>
+{/* User Menu - Only show when authenticated */}
+            {isAuthenticated && (
+              <div className="relative">
+                <Button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  variant="ghost"
+                  size="sm"
+                  className="p-2"
+                >
+                  <ApperIcon name="User" className="w-5 h-5" />
+                </Button>
 
-              {/* Dropdown Menu */}
-              {showUserMenu && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowUserMenu(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
-                    <div className="py-2">
-                      <Link
-                        to="/user/demo_user"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <ApperIcon name="User" className="w-4 h-4" />
-                          <span>Profile</span>
-                        </div>
-                      </Link>
-                      <button
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <ApperIcon name="Settings" className="w-4 h-4" />
-                          <span>Settings</span>
-                        </div>
-                      </button>
-                      <div className="border-t border-gray-100 my-1" />
-<button
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          if (window.ApperSDK?.ApperUI?.logout) {
-                            window.ApperSDK.ApperUI.logout();
-                          }
-                        }}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <ApperIcon name="LogOut" className="w-4 h-4" />
-                          <span>Sign Out</span>
-                        </div>
-                      </button>
+                {/* Dropdown Menu */}
+                {showUserMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowUserMenu(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                      <div className="py-2">
+                        <Link
+                          to="/user/demo_user"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <ApperIcon name="User" className="w-4 h-4" />
+                            <span>Profile</span>
+                          </div>
+                        </Link>
+                        <button
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <ApperIcon name="Settings" className="w-4 h-4" />
+                            <span>Settings</span>
+                          </div>
+                        </button>
+                        <div className="border-t border-gray-100 my-1" />
+                        <button
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            if (window.ApperSDK?.ApperUI?.logout) {
+                              window.ApperSDK.ApperUI.logout();
+                            }
+                          }}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <ApperIcon name="LogOut" className="w-4 h-4" />
+                            <span>Sign Out</span>
+                          </div>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

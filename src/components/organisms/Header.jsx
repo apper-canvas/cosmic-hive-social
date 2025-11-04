@@ -116,9 +116,14 @@ const Header = ({ className }) => {
                         </div>
                       </button>
                       <div className="border-t border-gray-100 my-1" />
-                      <button
+<button
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                        onClick={() => setShowUserMenu(false)}
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          if (window.ApperSDK?.ApperUI?.logout) {
+                            window.ApperSDK.ApperUI.logout();
+                          }
+                        }}
                       >
                         <div className="flex items-center space-x-2">
                           <ApperIcon name="LogOut" className="w-4 h-4" />

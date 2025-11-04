@@ -1,151 +1,370 @@
-import communitiesData from "@/services/mockData/communities.json";
+import { getApperClient } from "@/services/apperClient";
+import { toast } from "react-toastify";
 
 class CommunitiesService {
   constructor() {
-    this.communities = [...communitiesData];
+    this.tableName = 'community_c';
   }
 
   async getAll() {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const sortedCommunities = this.communities
-          .sort((a, b) => b.memberCount - a.memberCount);
-        resolve([...sortedCommunities]);
-      }, Math.random() * 300 + 200);
-    });
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
+
+      const params = {
+        fields: [
+          {"field": {"Name": "Id"}},
+          {"field": {"Name": "name_c"}},
+          {"field": {"Name": "description_c"}},
+          {"field": {"Name": "member_count_c"}},
+          {"field": {"Name": "is_subscribed_c"}},
+          {"field": {"Name": "created_at_c"}}
+        ],
+        orderBy: [{"fieldName": "member_count_c", "sorttype": "DESC"}]
+      };
+
+      const response = await apperClient.fetchRecords(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return [];
+      }
+
+      // Transform data to match UI expectations
+      const transformedData = (response.data || []).map(item => ({
+        id: String(item.Id),
+        name: item.name_c || '',
+        description: item.description_c || '',
+        memberCount: item.member_count_c || 0,
+        isSubscribed: item.is_subscribed_c || false,
+        createdAt: item.created_at_c || new Date().toISOString()
+      }));
+
+      return transformedData;
+    } catch (error) {
+      console.error("Error fetching communities:", error?.response?.data?.message || error);
+      return [];
+    }
   }
 
   async getById(id) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const community = this.communities.find(c => c.id === id);
-        if (community) {
-          resolve({ ...community });
-        } else {
-          reject(new Error("Community not found"));
-        }
-      }, Math.random() * 200 + 100);
-    });
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
+
+      const params = {
+        fields: [
+          {"field": {"Name": "Id"}},
+          {"field": {"Name": "name_c"}},
+          {"field": {"Name": "description_c"}},
+          {"field": {"Name": "member_count_c"}},
+          {"field": {"Name": "is_subscribed_c"}},
+          {"field": {"Name": "created_at_c"}}
+        ]
+      };
+
+      const response = await apperClient.getRecordById(this.tableName, parseInt(id), params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      if (!response.data) {
+        throw new Error("Community not found");
+      }
+
+      // Transform data to match UI expectations
+      const item = response.data;
+      return {
+        id: String(item.Id),
+        name: item.name_c || '',
+        description: item.description_c || '',
+        memberCount: item.member_count_c || 0,
+        isSubscribed: item.is_subscribed_c || false,
+        createdAt: item.created_at_c || new Date().toISOString()
+      };
+    } catch (error) {
+      console.error(`Error fetching community ${id}:`, error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
-async getByName(name) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const community = this.communities.find(c => 
-          c.name.toLowerCase() === name.toLowerCase()
-        );
-        if (community) {
-          resolve({ ...community });
-        } else {
-          reject(new Error("Community not found"));
-        }
-      }, Math.random() * 200 + 100);
-    });
-  }
+  async getByName(name) {
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
 
-  async toggleSubscription(id) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const communityIndex = this.communities.findIndex(c => c.id === id);
-        if (communityIndex !== -1) {
-          this.communities[communityIndex].isSubscribed = !this.communities[communityIndex].isSubscribed;
-          if (this.communities[communityIndex].isSubscribed) {
-            this.communities[communityIndex].memberCount += 1;
-          } else {
-            this.communities[communityIndex].memberCount -= 1;
-          }
-          resolve({ ...this.communities[communityIndex] });
-        }
-      }, Math.random() * 300 + 100);
-    });
+      const params = {
+        fields: [
+          {"field": {"Name": "Id"}},
+          {"field": {"Name": "name_c"}},
+          {"field": {"Name": "description_c"}},
+          {"field": {"Name": "member_count_c"}},
+          {"field": {"Name": "is_subscribed_c"}},
+          {"field": {"Name": "created_at_c"}}
+        ],
+        where: [{
+          "FieldName": "name_c",
+          "Operator": "EqualTo",
+          "Values": [name.toLowerCase()]
+        }]
+      };
+
+      const response = await apperClient.fetchRecords(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      if (!response.data || response.data.length === 0) {
+        throw new Error("Community not found");
+      }
+
+      // Transform data to match UI expectations
+      const item = response.data[0];
+      return {
+        id: String(item.Id),
+        name: item.name_c || '',
+        description: item.description_c || '',
+        memberCount: item.member_count_c || 0,
+        isSubscribed: item.is_subscribed_c || false,
+        createdAt: item.created_at_c || new Date().toISOString()
+      };
+    } catch (error) {
+      console.error("Error fetching community by name:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async subscribe(communityId, subscribe = true) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const communityIndex = this.communities.findIndex(c => c.id === communityId);
-        if (communityIndex === -1) {
-          reject(new Error("Community not found"));
-          return;
-        }
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
 
-        const community = this.communities[communityIndex];
-        community.isSubscribed = subscribe;
-        
-        // Update member count
-        if (subscribe) {
-          community.memberCount += 1;
-        } else {
-          community.memberCount = Math.max(0, community.memberCount - 1);
-        }
+      // First get current community data
+      const currentCommunity = await this.getById(communityId);
+      
+      let newMemberCount = currentCommunity.memberCount;
+      if (subscribe && !currentCommunity.isSubscribed) {
+        newMemberCount += 1;
+      } else if (!subscribe && currentCommunity.isSubscribed) {
+        newMemberCount = Math.max(0, newMemberCount - 1);
+      }
 
-        resolve({ ...community });
-      }, Math.random() * 300 + 200);
-    });
+      const params = {
+        records: [{
+          Id: parseInt(communityId),
+          is_subscribed_c: subscribe,
+          member_count_c: newMemberCount
+        }]
+      };
+
+      const response = await apperClient.updateRecord(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      // Return updated community data
+      return await this.getById(communityId);
+    } catch (error) {
+      console.error("Error updating subscription:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async create(communityData) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newCommunity = {
-          id: String(Math.max(...this.communities.map(c => parseInt(c.id))) + 1),
-          name: communityData.name.toLowerCase().replace(/\s+/g, ""),
-          description: communityData.description,
-          memberCount: 1, // Creator is first member
-          createdAt: new Date().toISOString(),
-          isSubscribed: true
-        };
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
 
-        this.communities.push(newCommunity);
-        resolve({ ...newCommunity });
-      }, Math.random() * 500 + 300);
-    });
+      const params = {
+        records: [{
+          name_c: communityData.name.toLowerCase().replace(/\s+/g, ""),
+          description_c: communityData.description,
+          member_count_c: 1, // Creator is first member
+          is_subscribed_c: true,
+          created_at_c: new Date().toISOString()
+        }]
+      };
+
+      const response = await apperClient.createRecord(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      if (response.results) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to create ${failed.length} communities:`, failed);
+          failed.forEach(record => {
+            record.errors?.forEach(error => toast.error(`${error.fieldLabel}: ${error}`));
+            if (record.message) toast.error(record.message);
+          });
+        }
+
+        if (successful.length > 0) {
+          const createdCommunity = successful[0].data;
+          return {
+            id: String(createdCommunity.Id),
+            name: createdCommunity.name_c,
+            description: createdCommunity.description_c,
+            memberCount: createdCommunity.member_count_c,
+            isSubscribed: createdCommunity.is_subscribed_c,
+            createdAt: createdCommunity.created_at_c
+          };
+        }
+      }
+
+      throw new Error("Failed to create community");
+    } catch (error) {
+      console.error("Error creating community:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async update(id, data) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const communityIndex = this.communities.findIndex(c => c.id === id);
-        if (communityIndex === -1) {
-          reject(new Error("Community not found"));
-          return;
-        }
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
 
-        this.communities[communityIndex] = { 
-          ...this.communities[communityIndex], 
-          ...data 
-        };
-        resolve({ ...this.communities[communityIndex] });
-      }, Math.random() * 300 + 200);
-    });
+      // Only include updateable fields
+      const updateData = {
+        Id: parseInt(id)
+      };
+
+      if (data.name !== undefined) updateData.name_c = data.name;
+      if (data.description !== undefined) updateData.description_c = data.description;
+      if (data.memberCount !== undefined) updateData.member_count_c = data.memberCount;
+      if (data.isSubscribed !== undefined) updateData.is_subscribed_c = data.isSubscribed;
+
+      const params = {
+        records: [updateData]
+      };
+
+      const response = await apperClient.updateRecord(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      // Return updated community data
+      return await this.getById(id);
+    } catch (error) {
+      console.error("Error updating community:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async delete(id) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const communityIndex = this.communities.findIndex(c => c.id === id);
-        if (communityIndex === -1) {
-          reject(new Error("Community not found"));
-          return;
-        }
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
 
-        this.communities.splice(communityIndex, 1);
-        resolve({ success: true });
-      }, Math.random() * 300 + 200);
-    });
+      const params = {
+        RecordIds: [parseInt(id)]
+      };
+
+      const response = await apperClient.deleteRecord(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting community:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async search(query) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const filteredCommunities = this.communities.filter(community =>
-          community.name.toLowerCase().includes(query.toLowerCase()) ||
-          community.description.toLowerCase().includes(query.toLowerCase())
-        ).sort((a, b) => b.memberCount - a.memberCount);
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
 
-        resolve([...filteredCommunities]);
-      }, Math.random() * 300 + 200);
-    });
+      const params = {
+        fields: [
+          {"field": {"Name": "Id"}},
+          {"field": {"Name": "name_c"}},
+          {"field": {"Name": "description_c"}},
+          {"field": {"Name": "member_count_c"}},
+          {"field": {"Name": "is_subscribed_c"}},
+          {"field": {"Name": "created_at_c"}}
+        ],
+        whereGroups: [{
+          "operator": "OR",
+          "subGroups": [
+            {"conditions": [{
+              "fieldName": "name_c",
+              "operator": "Contains",
+              "values": [query.toLowerCase()]
+            }], "operator": "OR"},
+            {"conditions": [{
+              "fieldName": "description_c",
+              "operator": "Contains",
+              "values": [query.toLowerCase()]
+            }], "operator": "OR"}
+          ]
+        }],
+        orderBy: [{"fieldName": "member_count_c", "sorttype": "DESC"}]
+      };
+
+      const response = await apperClient.fetchRecords(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return [];
+      }
+
+      // Transform data to match UI expectations
+      const transformedData = (response.data || []).map(item => ({
+        id: String(item.Id),
+        name: item.name_c || '',
+        description: item.description_c || '',
+        memberCount: item.member_count_c || 0,
+        isSubscribed: item.is_subscribed_c || false,
+        createdAt: item.created_at_c || new Date().toISOString()
+      }));
+
+      return transformedData;
+    } catch (error) {
+      console.error("Error searching communities:", error?.response?.data?.message || error);
+      return [];
+    }
   }
 }
 

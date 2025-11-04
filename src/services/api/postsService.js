@@ -1,219 +1,423 @@
-import postsData from "@/services/mockData/posts.json";
+import { getApperClient } from "@/services/apperClient";
+import { toast } from "react-toastify";
 
 class PostsService {
   constructor() {
-    this.posts = [...postsData];
+    this.tableName = 'post_c';
   }
 
   async getAll(options = {}) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-let filteredPosts = [...this.posts];
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
 
-        // Filter by community
-        if (options.community) {
-          filteredPosts = filteredPosts.filter(
-            post => post.communityName.toLowerCase() === options.community.toLowerCase()
-          );
+      const params = {
+        fields: [
+          {"field": {"Name": "Id"}},
+          {"field": {"Name": "title_c"}},
+          {"field": {"Name": "content_c"}},
+          {"field": {"Name": "type_c"}},
+          {"field": {"Name": "image_url_c"}},
+          {"field": {"Name": "link_url_c"}},
+          {"field": {"Name": "author_username_c"}},
+          {"field": {"Name": "community_name_c"}},
+          {"field": {"Name": "upvotes_c"}},
+          {"field": {"Name": "downvotes_c"}},
+          {"field": {"Name": "comment_count_c"}},
+          {"field": {"Name": "created_at_c"}},
+          {"field": {"Name": "user_vote_c"}},
+          {"field": {"Name": "is_pinned_c"}}
+        ],
+        orderBy: [{"fieldName": "created_at_c", "sorttype": "DESC"}],
+        pagingInfo: {
+          limit: options.limit || 20,
+          offset: ((options.page || 1) - 1) * (options.limit || 20)
         }
+      };
 
-        // Filter by post type
-        if (options.postType) {
-          filteredPosts = filteredPosts.filter(post => {
-            switch (options.postType) {
-              case "image":
-                return post.type === "image" || post.imageUrl;
-              case "video":
-                return post.type === "video";
-              case "link":
-                return post.type === "link" || post.linkUrl;
-              case "text":
-                return post.type === "text" && !post.imageUrl && !post.linkUrl;
-              default:
-                return true;
-            }
-          });
-        }
+      // Add community filter if specified
+      if (options.community) {
+        params.where = [{
+          "FieldName": "community_name_c",
+          "Operator": "EqualTo",
+          "Values": [options.community]
+        }];
+      }
 
-        // Sort by filter type
-        switch (options.filter) {
-          case "new":
-            filteredPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            break;
-          case "top":
-            filteredPosts.sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes));
-            break;
-          case "rising":
-            // Simple rising algorithm based on recent votes and time
-            filteredPosts.sort((a, b) => {
-              const aScore = (a.upvotes - a.downvotes) / Math.max(1, Math.floor((new Date() - new Date(a.createdAt)) / (1000 * 60 * 60)));
-              const bScore = (b.upvotes - b.downvotes) / Math.max(1, Math.floor((new Date() - new Date(b.createdAt)) / (1000 * 60 * 60)));
-              return bScore - aScore;
-            });
-            break;
-          case "controversial":
-            // Sort by posts with similar upvotes and downvotes (controversial)
-            filteredPosts.sort((a, b) => {
-              const aRatio = Math.min(a.upvotes, a.downvotes) / Math.max(a.upvotes, a.downvotes, 1);
-              const bRatio = Math.min(b.upvotes, b.downvotes) / Math.max(b.upvotes, b.downvotes, 1);
-              return bRatio - aRatio;
-            });
-            break;
-          default: // "hot"
-            // Simple hot algorithm combining score and recency
-            filteredPosts.sort((a, b) => {
-              const aHot = Math.log10(Math.max(1, a.upvotes - a.downvotes)) - ((new Date() - new Date(a.createdAt)) / (1000 * 60 * 60 * 24));
-              const bHot = Math.log10(Math.max(1, b.upvotes - b.downvotes)) - ((new Date() - new Date(b.createdAt)) / (1000 * 60 * 60 * 24));
-              return bHot - aHot;
-            });
-        }
-
-        // Separate pinned posts and regular posts
-        const pinnedPosts = filteredPosts.filter(post => post.isPinned);
-        const regularPosts = filteredPosts.filter(post => !post.isPinned);
+      // Add post type filter if specified
+      if (options.postType && options.postType !== "all") {
+        const typeFilter = {
+          "FieldName": "type_c",
+          "Operator": "EqualTo",
+          "Values": [options.postType]
+        };
         
-        // Combine with pinned posts first
-        filteredPosts = [...pinnedPosts, ...regularPosts];
+        if (params.where) {
+          params.where.push(typeFilter);
+        } else {
+          params.where = [typeFilter];
+        }
+      }
 
-        // Pagination
-        const page = options.page || 1;
-        const limit = options.limit || 10;
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + limit;
-        
-        resolve(filteredPosts.slice(startIndex, endIndex));
-      }, Math.random() * 300 + 200);
-    });
+      const response = await apperClient.fetchRecords(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return [];
+      }
+
+      // Transform data to match UI expectations
+      const transformedData = (response.data || []).map(item => ({
+        id: String(item.Id),
+        title: item.title_c || '',
+        content: item.content_c || '',
+        type: item.type_c || 'text',
+        imageUrl: item.image_url_c || null,
+        linkUrl: item.link_url_c || null,
+        authorUsername: item.author_username_c || '',
+        communityName: item.community_name_c || '',
+        upvotes: item.upvotes_c || 0,
+        downvotes: item.downvotes_c || 0,
+        commentCount: item.comment_count_c || 0,
+        createdAt: item.created_at_c || new Date().toISOString(),
+        userVote: item.user_vote_c || 'none',
+        isPinned: item.is_pinned_c || false
+      }));
+
+      return transformedData;
+    } catch (error) {
+      console.error("Error fetching posts:", error?.response?.data?.message || error);
+      toast.error("Failed to load posts");
+      return [];
+    }
   }
 
   async getById(id) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const post = this.posts.find(p => p.id === id);
-        if (post) {
-          resolve({ ...post });
-        } else {
-          reject(new Error("Post not found"));
-        }
-      }, Math.random() * 200 + 100);
-    });
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
+
+      const params = {
+        fields: [
+          {"field": {"Name": "Id"}},
+          {"field": {"Name": "title_c"}},
+          {"field": {"Name": "content_c"}},
+          {"field": {"Name": "type_c"}},
+          {"field": {"Name": "image_url_c"}},
+          {"field": {"Name": "link_url_c"}},
+          {"field": {"Name": "author_username_c"}},
+          {"field": {"Name": "community_name_c"}},
+          {"field": {"Name": "upvotes_c"}},
+          {"field": {"Name": "downvotes_c"}},
+          {"field": {"Name": "comment_count_c"}},
+          {"field": {"Name": "created_at_c"}},
+          {"field": {"Name": "user_vote_c"}},
+          {"field": {"Name": "is_pinned_c"}}
+        ]
+      };
+
+      const response = await apperClient.getRecordById(this.tableName, parseInt(id), params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      if (!response.data) {
+        throw new Error("Post not found");
+      }
+
+      // Transform data to match UI expectations
+      const item = response.data;
+      return {
+        id: String(item.Id),
+        title: item.title_c || '',
+        content: item.content_c || '',
+        type: item.type_c || 'text',
+        imageUrl: item.image_url_c || null,
+        linkUrl: item.link_url_c || null,
+        authorUsername: item.author_username_c || '',
+        communityName: item.community_name_c || '',
+        upvotes: item.upvotes_c || 0,
+        downvotes: item.downvotes_c || 0,
+        commentCount: item.comment_count_c || 0,
+        createdAt: item.created_at_c || new Date().toISOString(),
+        userVote: item.user_vote_c || 'none',
+        isPinned: item.is_pinned_c || false
+      };
+    } catch (error) {
+      console.error(`Error fetching post ${id}:`, error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async getByUser(username) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const userPosts = this.posts
-          .filter(post => post.authorUsername === username)
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        resolve([...userPosts]);
-      }, Math.random() * 300 + 200);
-    });
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
+
+      const params = {
+        fields: [
+          {"field": {"Name": "Id"}},
+          {"field": {"Name": "title_c"}},
+          {"field": {"Name": "content_c"}},
+          {"field": {"Name": "type_c"}},
+          {"field": {"Name": "image_url_c"}},
+          {"field": {"Name": "link_url_c"}},
+          {"field": {"Name": "author_username_c"}},
+          {"field": {"Name": "community_name_c"}},
+          {"field": {"Name": "upvotes_c"}},
+          {"field": {"Name": "downvotes_c"}},
+          {"field": {"Name": "comment_count_c"}},
+          {"field": {"Name": "created_at_c"}},
+          {"field": {"Name": "user_vote_c"}},
+          {"field": {"Name": "is_pinned_c"}}
+        ],
+        where: [{
+          "FieldName": "author_username_c",
+          "Operator": "EqualTo",
+          "Values": [username]
+        }],
+        orderBy: [{"fieldName": "created_at_c", "sorttype": "DESC"}]
+      };
+
+      const response = await apperClient.fetchRecords(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return [];
+      }
+
+      // Transform data to match UI expectations
+      const transformedData = (response.data || []).map(item => ({
+        id: String(item.Id),
+        title: item.title_c || '',
+        content: item.content_c || '',
+        type: item.type_c || 'text',
+        imageUrl: item.image_url_c || null,
+        linkUrl: item.link_url_c || null,
+        authorUsername: item.author_username_c || '',
+        communityName: item.community_name_c || '',
+        upvotes: item.upvotes_c || 0,
+        downvotes: item.downvotes_c || 0,
+        commentCount: item.comment_count_c || 0,
+        createdAt: item.created_at_c || new Date().toISOString(),
+        userVote: item.user_vote_c || 'none',
+        isPinned: item.is_pinned_c || false
+      }));
+
+      return transformedData;
+    } catch (error) {
+      console.error("Error fetching user posts:", error?.response?.data?.message || error);
+      return [];
+    }
   }
 
   async create(postData) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newPost = {
-          id: String(Math.max(...this.posts.map(p => parseInt(p.id))) + 1),
-          title: postData.title,
-          content: postData.content || "",
-          type: postData.type,
-          imageUrl: postData.imageUrl || null,
-          linkUrl: postData.linkUrl || null,
-          authorUsername: "demo_user", // Simulated current user
-          communityName: postData.communityName,
-          upvotes: 1, // Auto-upvote own post
-          downvotes: 0,
-          commentCount: 0,
-          createdAt: new Date().toISOString(),
-          userVote: "up"
-        };
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
 
-        this.posts.unshift(newPost);
-        resolve({ ...newPost });
-      }, Math.random() * 500 + 300);
-    });
+      const params = {
+        records: [{
+          title_c: postData.title,
+          content_c: postData.content || "",
+          type_c: postData.type,
+          image_url_c: postData.imageUrl || null,
+          link_url_c: postData.linkUrl || null,
+          author_username_c: postData.authorUsername || "current_user",
+          community_name_c: postData.communityName,
+          upvotes_c: 1,
+          downvotes_c: 0,
+          comment_count_c: 0,
+          created_at_c: new Date().toISOString(),
+          user_vote_c: "up",
+          is_pinned_c: false
+        }]
+      };
+
+      const response = await apperClient.createRecord(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      if (response.results) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to create ${failed.length} posts:`, failed);
+          failed.forEach(record => {
+            record.errors?.forEach(error => toast.error(`${error.fieldLabel}: ${error}`));
+            if (record.message) toast.error(record.message);
+          });
+        }
+
+        if (successful.length > 0) {
+          const createdPost = successful[0].data;
+          return {
+            Id: createdPost.Id,
+            id: String(createdPost.Id)
+          };
+        }
+      }
+
+      throw new Error("Failed to create post");
+    } catch (error) {
+      console.error("Error creating post:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async vote(postId, voteType) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const postIndex = this.posts.findIndex(p => p.id === postId);
-        if (postIndex === -1) {
-          reject(new Error("Post not found"));
-          return;
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
+
+      // First get current post data
+      const currentPost = await this.getById(postId);
+      
+      let newUpvotes = currentPost.upvotes;
+      let newDownvotes = currentPost.downvotes;
+      let newVote = voteType;
+
+      // Remove previous vote effect
+      if (currentPost.userVote === "up") {
+        newUpvotes -= 1;
+      } else if (currentPost.userVote === "down") {
+        newDownvotes -= 1;
+      }
+
+      // Apply new vote effect (toggle if same vote)
+      if (voteType === currentPost.userVote) {
+        newVote = "none";
+      } else {
+        if (voteType === "up") {
+          newUpvotes += 1;
+        } else if (voteType === "down") {
+          newDownvotes += 1;
         }
+      }
 
-        const post = this.posts[postIndex];
-        const previousVote = post.userVote;
+      const params = {
+        records: [{
+          Id: parseInt(postId),
+          upvotes_c: newUpvotes,
+          downvotes_c: newDownvotes,
+          user_vote_c: newVote
+        }]
+      };
 
-        // Remove previous vote
-        if (previousVote === "up") {
-          post.upvotes -= 1;
-        } else if (previousVote === "down") {
-          post.downvotes -= 1;
-        }
+      const response = await apperClient.updateRecord(this.tableName, params);
 
-        // Apply new vote (or toggle off if same)
-        if (voteType === previousVote) {
-          post.userVote = "none";
-        } else {
-          post.userVote = voteType;
-          if (voteType === "up") {
-            post.upvotes += 1;
-          } else if (voteType === "down") {
-            post.downvotes += 1;
-          }
-        }
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
 
-        resolve({ success: true });
-      }, Math.random() * 200 + 100);
-    });
+      return { success: true };
+    } catch (error) {
+      console.error("Error voting on post:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async update(id, data) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const postIndex = this.posts.findIndex(p => p.id === id);
-        if (postIndex === -1) {
-          reject(new Error("Post not found"));
-          return;
-        }
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
 
-        this.posts[postIndex] = { ...this.posts[postIndex], ...data };
-        resolve({ ...this.posts[postIndex] });
-      }, Math.random() * 300 + 200);
-    });
+      // Only include updateable fields
+      const updateData = {
+        Id: parseInt(id)
+      };
+
+      if (data.title !== undefined) updateData.title_c = data.title;
+      if (data.content !== undefined) updateData.content_c = data.content;
+      if (data.type !== undefined) updateData.type_c = data.type;
+      if (data.imageUrl !== undefined) updateData.image_url_c = data.imageUrl;
+      if (data.linkUrl !== undefined) updateData.link_url_c = data.linkUrl;
+      if (data.upvotes !== undefined) updateData.upvotes_c = data.upvotes;
+      if (data.downvotes !== undefined) updateData.downvotes_c = data.downvotes;
+      if (data.commentCount !== undefined) updateData.comment_count_c = data.commentCount;
+      if (data.userVote !== undefined) updateData.user_vote_c = data.userVote;
+      if (data.isPinned !== undefined) updateData.is_pinned_c = data.isPinned;
+
+      const params = {
+        records: [updateData]
+      };
+
+      const response = await apperClient.updateRecord(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating post:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async delete(id) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const postIndex = this.posts.findIndex(p => p.id === id);
-        if (postIndex === -1) {
-          reject(new Error("Post not found"));
-          return;
-        }
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
 
-        this.posts.splice(postIndex, 1);
-        resolve({ success: true });
-}, Math.random() * 300 + 200);
-    });
+      const params = {
+        RecordIds: [parseInt(id)]
+      };
+
+      const response = await apperClient.deleteRecord(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting post:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async updateCommentCount(postId, increment = 1) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const postIndex = this.posts.findIndex(p => p.id === postId);
-        if (postIndex === -1) {
-          reject(new Error("Post not found"));
-          return;
-        }
-
-        this.posts[postIndex].commentCount += increment;
-        resolve({ success: true });
-      }, Math.random() * 100 + 50);
-    });
+    try {
+      const currentPost = await this.getById(postId);
+      const newCount = currentPost.commentCount + increment;
+      
+      await this.update(postId, { commentCount: newCount });
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating comment count:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 }
 

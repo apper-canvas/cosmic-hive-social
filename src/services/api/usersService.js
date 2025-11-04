@@ -1,136 +1,291 @@
-import usersData from "@/services/mockData/users.json";
+import { getApperClient } from "@/services/apperClient";
+import { toast } from "react-toastify";
 
 class UsersService {
   constructor() {
-    this.users = [...usersData];
+    this.tableName = 'user_c';
   }
 
   async getAll() {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const sortedUsers = this.users
-          .sort((a, b) => (b.postKarma + b.commentKarma) - (a.postKarma + a.commentKarma));
-        resolve([...sortedUsers]);
-      }, Math.random() * 300 + 200);
-    });
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
+
+      const params = {
+        fields: [
+          {"field": {"Name": "Id"}},
+          {"field": {"Name": "username_c"}},
+          {"field": {"Name": "post_karma_c"}},
+          {"field": {"Name": "comment_karma_c"}},
+          {"field": {"Name": "created_at_c"}}
+        ],
+        orderBy: [{"fieldName": "created_at_c", "sorttype": "DESC"}]
+      };
+
+      const response = await apperClient.fetchRecords(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return [];
+      }
+
+      // Transform data to match UI expectations
+      const transformedData = (response.data || []).map(item => ({
+        id: String(item.Id),
+        username: item.username_c || '',
+        postKarma: item.post_karma_c || 0,
+        commentKarma: item.comment_karma_c || 0,
+        createdAt: item.created_at_c || new Date().toISOString()
+      }));
+
+      // Sort by total karma
+      transformedData.sort((a, b) => (b.postKarma + b.commentKarma) - (a.postKarma + a.commentKarma));
+
+      return transformedData;
+    } catch (error) {
+      console.error("Error fetching users:", error?.response?.data?.message || error);
+      return [];
+    }
   }
 
   async getByUsername(username) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const user = this.users.find(u => 
-          u.username.toLowerCase() === username.toLowerCase()
-        );
-        if (user) {
-          resolve({ ...user });
-        } else {
-          reject(new Error("User not found"));
-        }
-      }, Math.random() * 200 + 100);
-    });
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
+
+      const params = {
+        fields: [
+          {"field": {"Name": "Id"}},
+          {"field": {"Name": "username_c"}},
+          {"field": {"Name": "post_karma_c"}},
+          {"field": {"Name": "comment_karma_c"}},
+          {"field": {"Name": "created_at_c"}}
+        ],
+        where: [{
+          "FieldName": "username_c",
+          "Operator": "EqualTo",
+          "Values": [username]
+        }]
+      };
+
+      const response = await apperClient.fetchRecords(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      if (!response.data || response.data.length === 0) {
+        throw new Error("User not found");
+      }
+
+      // Transform data to match UI expectations
+      const item = response.data[0];
+      return {
+        id: String(item.Id),
+        username: item.username_c || '',
+        postKarma: item.post_karma_c || 0,
+        commentKarma: item.comment_karma_c || 0,
+        createdAt: item.created_at_c || new Date().toISOString()
+      };
+    } catch (error) {
+      console.error("Error fetching user:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async create(userData) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Check if username already exists
-        const existingUser = this.users.find(u => 
-          u.username.toLowerCase() === userData.username.toLowerCase()
-        );
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
+
+      const params = {
+        records: [{
+          username_c: userData.username,
+          post_karma_c: 0,
+          comment_karma_c: 0,
+          created_at_c: new Date().toISOString()
+        }]
+      };
+
+      const response = await apperClient.createRecord(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      if (response.results) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
         
-        if (existingUser) {
-          reject(new Error("Username already exists"));
-          return;
+        if (failed.length > 0) {
+          console.error(`Failed to create ${failed.length} users:`, failed);
+          failed.forEach(record => {
+            record.errors?.forEach(error => toast.error(`${error.fieldLabel}: ${error}`));
+            if (record.message) toast.error(record.message);
+          });
+          throw new Error("Username already exists");
         }
 
-        const newUser = {
-          username: userData.username,
-          postKarma: 0,
-          commentKarma: 0,
-          createdAt: new Date().toISOString()
-        };
+        if (successful.length > 0) {
+          const createdUser = successful[0].data;
+          return {
+            id: String(createdUser.Id),
+            username: createdUser.username_c,
+            postKarma: createdUser.post_karma_c || 0,
+            commentKarma: createdUser.comment_karma_c || 0,
+            createdAt: createdUser.created_at_c
+          };
+        }
+      }
 
-        this.users.push(newUser);
-        resolve({ ...newUser });
-      }, Math.random() * 500 + 300);
-    });
+      throw new Error("Failed to create user");
+    } catch (error) {
+      console.error("Error creating user:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async update(username, data) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const userIndex = this.users.findIndex(u => 
-          u.username.toLowerCase() === username.toLowerCase()
-        );
-        
-        if (userIndex === -1) {
-          reject(new Error("User not found"));
-          return;
-        }
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
 
-        // Don't allow username changes
-        const updatedData = { ...data };
-        delete updatedData.username;
+      // First find the user by username
+      const user = await this.getByUsername(username);
 
-        this.users[userIndex] = { 
-          ...this.users[userIndex], 
-          ...updatedData 
-        };
-        
-        resolve({ ...this.users[userIndex] });
-      }, Math.random() * 300 + 200);
-    });
+      // Only include updateable fields (excluding username_c for security)
+      const updateData = {
+        Id: parseInt(user.id)
+      };
+
+      if (data.postKarma !== undefined) updateData.post_karma_c = data.postKarma;
+      if (data.commentKarma !== undefined) updateData.comment_karma_c = data.commentKarma;
+
+      const params = {
+        records: [updateData]
+      };
+
+      const response = await apperClient.updateRecord(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      // Return updated user data
+      return await this.getByUsername(username);
+    } catch (error) {
+      console.error("Error updating user:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async delete(username) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const userIndex = this.users.findIndex(u => 
-          u.username.toLowerCase() === username.toLowerCase()
-        );
-        
-        if (userIndex === -1) {
-          reject(new Error("User not found"));
-          return;
-        }
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
 
-        this.users.splice(userIndex, 1);
-        resolve({ success: true });
-      }, Math.random() * 300 + 200);
-    });
+      // First find the user by username
+      const user = await this.getByUsername(username);
+
+      const params = {
+        RecordIds: [parseInt(user.id)]
+      };
+
+      const response = await apperClient.deleteRecord(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        throw new Error(response.message);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting user:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 
   async search(query) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const filteredUsers = this.users.filter(user =>
-          user.username.toLowerCase().includes(query.toLowerCase())
-        ).sort((a, b) => (b.postKarma + b.commentKarma) - (a.postKarma + a.commentKarma));
+    try {
+      const apperClient = getApperClient();
+      if (!apperClient) {
+        throw new Error('ApperClient not initialized');
+      }
 
-        resolve([...filteredUsers]);
-      }, Math.random() * 300 + 200);
-    });
+      const params = {
+        fields: [
+          {"field": {"Name": "Id"}},
+          {"field": {"Name": "username_c"}},
+          {"field": {"Name": "post_karma_c"}},
+          {"field": {"Name": "comment_karma_c"}},
+          {"field": {"Name": "created_at_c"}}
+        ],
+        where: [{
+          "FieldName": "username_c",
+          "Operator": "Contains",
+          "Values": [query]
+        }]
+      };
+
+      const response = await apperClient.fetchRecords(this.tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return [];
+      }
+
+      // Transform data to match UI expectations
+      const transformedData = (response.data || []).map(item => ({
+        id: String(item.Id),
+        username: item.username_c || '',
+        postKarma: item.post_karma_c || 0,
+        commentKarma: item.comment_karma_c || 0,
+        createdAt: item.created_at_c || new Date().toISOString()
+      }));
+
+      // Sort by total karma
+      transformedData.sort((a, b) => (b.postKarma + b.commentKarma) - (a.postKarma + a.commentKarma));
+
+      return transformedData;
+    } catch (error) {
+      console.error("Error searching users:", error?.response?.data?.message || error);
+      return [];
+    }
   }
 
   async updateKarma(username, postKarmaDelta = 0, commentKarmaDelta = 0) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const userIndex = this.users.findIndex(u => 
-          u.username.toLowerCase() === username.toLowerCase()
-        );
-        
-        if (userIndex === -1) {
-          reject(new Error("User not found"));
-          return;
-        }
-
-        const user = this.users[userIndex];
-        user.postKarma = Math.max(0, user.postKarma + postKarmaDelta);
-        user.commentKarma = Math.max(0, user.commentKarma + commentKarmaDelta);
-
-        resolve({ ...user });
-      }, Math.random() * 200 + 100);
-    });
+    try {
+      const user = await this.getByUsername(username);
+      const newPostKarma = Math.max(0, user.postKarma + postKarmaDelta);
+      const newCommentKarma = Math.max(0, user.commentKarma + commentKarmaDelta);
+      
+      return await this.update(username, {
+        postKarma: newPostKarma,
+        commentKarma: newCommentKarma
+      });
+    } catch (error) {
+      console.error("Error updating karma:", error?.response?.data?.message || error);
+      throw error;
+    }
   }
 }
 

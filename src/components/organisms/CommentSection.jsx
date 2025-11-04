@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Button from "@/components/atoms/Button";
 import Textarea from "@/components/atoms/Textarea";
@@ -17,10 +19,16 @@ const CommentSection = ({
   className,
   postAuthor
 }) => {
+  const { user } = useSelector(state => state.user);
+  const navigate = useNavigate();
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmitComment = async () => {
+const handleSubmitComment = async () => {
+    if (!user) {
+      navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
     if (!newComment.trim()) return;
 
     setSubmitting(true);
@@ -36,7 +44,11 @@ const CommentSection = ({
     }
   };
 
-  const handleReply = async (parentId, content) => {
+const handleReply = async (parentId, content) => {
+    if (!user) {
+      navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
     try {
       await onAddComment(content, parentId);
       toast.success("Reply added!");
@@ -68,10 +80,15 @@ const CommentSection = ({
           Add a comment
         </h3>
         
-        <div className="space-y-3">
+<div className="space-y-3">
           <Textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
+            onClick={() => {
+              if (!user) {
+                navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+              }
+            }}
             placeholder="What are your thoughts?"
             rows={4}
             className="resize-none"
